@@ -45,14 +45,27 @@ if( ! class_exists( 'MAG_CMB2_Field_Post_Search_Ajax' ) ) {
 
 			if($field->args( 'limit' ) > 1){
 				echo '<ul class="cmb-post-search-ajax-results" id="' . $field_name . '_results">';
+
 				if( isset($value) && !empty($value) ){
 					if( !is_array($value) ){ $value = array($value); }
 					foreach($value as $val){
-						$handle = ($field->args( 'sortable' )) ? '<span class="hndl"></span>' : '';	
-						echo '<li>'.$handle.'<input type="hidden" name="'.$field_name.'_results[]" value="'.$val.'"><a href="'.get_edit_post_link($val).'" target="_blank" class="edit-link">'.get_the_title($val).'</a><a class="remover"><span class="dashicons dashicons-no"></span><span class="dashicons dashicons-dismiss"></span></a></li>';
+						$handle = ($field->args( 'sortable' )) ? '<span class="hndl"></span>' : '';
+						/**
+						 * is this taxonomy?
+						 */
+						if ( isset( $field->args('query_args')['taxonomy'] ) ) {
+							$term = get_term($val);
+							echo '<li>'.$handle.'<input type="hidden" name="'.$field_name.'_results[]" value="'.$val.'"><a href="'.get_edit_term_link($val).'" target="_blank" class="edit-link">'.$term->name.'</a> <a class="remover"><span class="dashicons dashicons-no"></span><span class="dashicons dashicons-dismiss"></span></a></li>';
+						/**
+						 * or am I post or page?
+						 */
+						} else {
+							$category = get_the_category($val)[0];
+							echo '<li>'.$handle.'<input type="hidden" name="'.$field_name.'_results[]" value="'.$val.'"><a href="'.get_edit_post_link($val).'" target="_blank" class="edit-link">'.get_the_title($val).'</a> <small>('.$category->name.')</i></small><a class="remover"><span class="dashicons dashicons-no"></span><span class="dashicons dashicons-dismiss"></span></a></li>';
+						}
 					}
 				}
-				echo '</ul>';			
+				echo '</ul>';
 				$field_value = '';
 			}
 			else{
@@ -129,7 +142,6 @@ if( ! class_exists( 'MAG_CMB2_Field_Post_Search_Ajax' ) ) {
 		 * Enqueue scripts and styles
 		 */
 		public function setup_admin_scripts() {
-
 			wp_register_script( 'jquery-autocomplete', self::url( 'js/jquery.autocomplete.min.js' ), array( 'jquery' ), self::VERSION );
 			wp_register_script( 'mag-post-search-ajax', self::url( 'js/mag-post-search-ajax.js' ), array( 'jquery', 'jquery-autocomplete', 'jquery-ui-sortable' ), self::VERSION );
 			wp_localize_script( 'mag-post-search-ajax', 'psa', array(
@@ -151,21 +163,48 @@ if( ! class_exists( 'MAG_CMB2_Field_Post_Search_Ajax' ) ) {
 			}
 			else {
 				$args 		= json_decode(stripslashes(htmlspecialchars_decode($_POST['query_args'])), true);
-				$args['s'] 	= $_POST['query'];
-				$results 	= new WP_Query( $args );
-				$datas 		= array();
-				if ( $results->have_posts() ) :
-					while ( $results->have_posts() ) : $results->the_post();
-						// Define filter "mag_cmb_post_search_ajax_result" to allow customize ajax results.
-						$datas[] = apply_filters( 'mag_cmb_post_search_ajax_result', array(
-							'value' => get_the_title(),
-							'data'	=> get_the_ID(),
-							'guid'	=> get_edit_post_link()
-						) );
-					endwhile;
-				endif;
-				wp_reset_postdata();
-				die( json_encode( $datas ) );			
+
+				/**
+				 * query for taxonomy Vs. query for posts
+				 */
+				if ( isset( $args['taxonomy'] ) ) {
+
+					$args['search'] 	= $_POST['query'];
+					$results 	= new WP_Term_Query( $args );
+					$datas 		= array();
+
+					if ( ! empty( $results ) && ! is_wp_error( $reuslts ) ) :
+						foreach ( $results->terms as $term ) {
+							$datas[] = apply_filters( 'mag_cmb_term_search_ajax_result', array(
+								'value' => $term->name,
+								'data'	=> $term->term_id,
+								'guid'	=> get_edit_term_link( $term->term_id, array($args['taxonomy']), $this->screen->post_type )
+							) );
+							wp_reset_query();
+						}
+					endif;
+
+				} else {
+
+					$args['s'] 	= $_POST['query'];
+					$results 	= new WP_Query( $args );
+					$datas 		= array();
+					if ( $results->have_posts() ) :
+						while ( $results->have_posts() ) : $results->the_post();
+							// Define filter "mag_cmb_post_search_ajax_result" to allow customize ajax results.
+							$datas[] = apply_filters( 'mag_cmb_post_search_ajax_result', array(
+								'value' => get_the_title() . ' (' . get_the_category()[0]->cat_name . ')',
+								'data'	=> get_the_ID(),
+								'guid'	=> get_edit_post_link()
+							) );
+						endwhile;
+					endif;
+					wp_reset_postdata();
+
+				}
+
+				die( json_encode( $datas ) );
+
 			}
 		}
 
