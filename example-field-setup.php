@@ -49,5 +49,19 @@ function cmb2_post_search_ajax_metaboxes_example() {
 		)
 	) );
 	
+	$example_meta->add_field( array(
+		'name'      	=> __( 'Example Terms', 'cmb2' ),
+		'id'        	=> 'cmb2_post_search_ajax_demo_multiple_terms',
+		'type'      	=> 'post_search_ajax',
+		'desc'			=> __( '(Start typing term name)', 'cmb2' ),
+		// Optional :
+		'limit'      	=> 10, 		// Limit selection to X items only (default 1)
+		'sortable' 	 	=> true, 	// Allow selected items to be sortable (default false)
+		'query_args'	=> array(
+			'hide_empty' => false,
+			'taxonomy' => array( 'category' ) // post_tag, custom_terms
+		)
+	) );
+	
 }
 add_action( 'cmb2_init', 'cmb2_post_search_ajax_metaboxes_example' );
