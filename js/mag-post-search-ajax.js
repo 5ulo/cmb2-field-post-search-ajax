@@ -4,7 +4,7 @@
 	$('.cmb-post-search-ajax').each(
 		function () {
 			
-			var fid 		= $(this).attr('id');
+			var fid = $(this).attr('id');
 			var query_args 	= $(this).attr('data-queryargs');
 			$(this).devbridgeAutocomplete({
 				serviceUrl: psa.ajaxurl,
