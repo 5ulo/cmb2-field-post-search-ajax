@@ -79,6 +79,7 @@ if( ! class_exists( 'MAG_CMB2_Field_Post_Search_Ajax' ) ) {
 				) );
 			}
 
+			echo '<div class="cmb-post-search-ajax-spinner-holder">';
 			echo $field_type->input( array( 
 				'type' 			=> 'text',
 				'name' 			=> $field_name,
@@ -88,10 +89,11 @@ if( ! class_exists( 'MAG_CMB2_Field_Post_Search_Ajax' ) ) {
 				'desc'			=> false,
 				'data-limit'	=> $field->args( 'limit' ) ? $field->args( 'limit' ) : '1',
 				'data-sortable'	=> $field->args( 'sortable' ) ? $field->args( 'sortable' ) : '0',
-				'data-queryargs'=> $field->args( 'query_args' ) ? htmlspecialchars( json_encode( $field->args( 'query_args' ) ), ENT_QUOTES, 'UTF-8' ) : ''
+				'data-queryargs'=> $field->args( 'query_args' ) ? htmlspecialchars( json_encode( $field->args( 'query_args' ) ), ENT_QUOTES, 'UTF-8' ) : '',
 			) );
 
-			echo '<img src="'.admin_url( 'images/spinner.gif' ).'" class="cmb-post-search-ajax-spinner" />';		
+			echo '<img src="'.admin_url( 'images/spinner.gif' ).'" class="cmb-post-search-ajax-spinner">';
+			echo '</div>';
 
 			$field_type->_desc( true, true );
 
